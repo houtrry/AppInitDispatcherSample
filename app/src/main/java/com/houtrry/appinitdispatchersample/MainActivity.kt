@@ -1,9 +1,9 @@
 package com.houtrry.appinitdispatchersample
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.houtrry.appinitdispatcher.AppInitDispatcher
-import com.houtrry.appinitdispatcher.Task
 
 class MainActivity : AppCompatActivity() {
 
@@ -11,12 +11,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        AppInitDispatcher.INSTANCE
-            .addTask(object : Task {
-                override fun run() {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-            })
-            .addTask(BuglyTask()).start()
+
+    }
+
+    fun doTask(view: View) {
+        AppInitDispatcher.INSTANCE.clear()
+                .addTask(ActiveAndroidTask())
+                .addTask(ANRWatchDogTask())
+                .addTask(BuglyTask())
+                .addTask(FrescoTask())
+                .addTask(JPushTask())
+                .addTask(LocationTask())
+                .addTask(LogTask())
+                .addTask(MapTask())
+                .addTask(OkHttpTask()).start()
     }
 }

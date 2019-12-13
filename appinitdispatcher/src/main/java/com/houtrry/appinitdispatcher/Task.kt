@@ -18,7 +18,7 @@ interface Task {
         return THREAD_TYPE_WORK
     }
 
-    fun dependOn(): List<Task>? {
+    fun dependOn(): List<Class<out Task>>? {
         return null
     }
 }

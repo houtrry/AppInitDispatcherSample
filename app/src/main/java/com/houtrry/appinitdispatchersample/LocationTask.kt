@@ -5,23 +5,24 @@ import com.houtrry.appinitdispatcher.showLog
 
 /**
  * @author: houtrry
- * @time: 2019/12/12
- * @desc:
+ * @date: 2019/12/13 10:34
+ * @version: $
+ * @description:
  */
-class BuglyTask : Task {
+class LocationTask : Task {
     override fun run() {
-        showLog("BuglyTask is running start, ${Thread.currentThread().name}, ${Thread.currentThread().id}")
+        showLog("LocationTask is running start, ${Thread.currentThread().name}, ${Thread.currentThread().id}")
 
         try {
-            Thread.sleep(1200)
+            Thread.sleep(1000)
         } catch (e:Exception) {
             e.printStackTrace()
         }
 
-        showLog("BuglyTask is running end")
+        showLog("LocationTask is running end")
     }
 
     override fun dependOn(): List<Class<out Task>>? {
-        return listOf(ANRWatchDogTask::class.java)
+        return listOf(OkHttpTask::class.java)
     }
 }

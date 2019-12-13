@@ -20,8 +20,28 @@ class AppInitDispatcher private constructor() {
         return this
     }
 
+    fun clear(): AppInitDispatcher {
+        tasks.clear()
+        return this
+    }
+
     fun start(): AppInitDispatcher {
         val directedAcyclicGraphSort = directedAcyclicGraphSort(tasks)
+
+        val inDegreeZeroTasks = findInDegreeZeroTasks(directedAcyclicGraphSort)
+
+
+
         return this
+    }
+
+    private fun findInDegreeZeroTasks(map: Map<Class<out Task>, Bag>):List<Bag> {
+        val list = mutableListOf<Bag>()
+        for ((key, value) in map) {
+            if (value.inDegree == 0) {
+                list.add(value)
+            }
+        }
+        return list
     }
 }
