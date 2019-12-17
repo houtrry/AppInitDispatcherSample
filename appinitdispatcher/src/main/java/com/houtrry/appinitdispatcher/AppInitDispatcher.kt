@@ -3,7 +3,6 @@ package com.houtrry.appinitdispatcher
 import android.os.Handler
 import android.os.Looper
 import java.util.concurrent.*
-import java.util.concurrent.locks.Lock
 import kotlin.math.max
 import kotlin.math.min
 
@@ -58,60 +57,24 @@ class AppInitDispatcher private constructor() {
                 }
             }
         }
-
-
         return this
     }
 
     private fun doTask(map: MutableMap<Class<out Task>, Bag>, bag: Bag) {
         showLog("${bag.task} start running")
         val startTime = System.currentTimeMillis()
-        val lockTask = lockTask(map, bag)
-        showLog("${bag.task} start running, and cost time is ${System.currentTimeMillis() - startTime}")
-        showLog("${bag.task} doTask, lockTask: $lockTask")
-        try {
-            bag.doTask()
-        } finally {
-            unlocks(lockTask)
-        }
-        showLog("${bag.task} end running, and cost time is ${System.currentTimeMillis() - startTime}")
-    }
-
-    private fun unlocks(lockTask: MutableList<Lock>) {
-        if (lockTask.isNullOrEmpty()) {
-            return
-        }
-        lockTask.forEach {
-            it.unlock()
-        }
-    }
-
-    private fun lockTask(map: MutableMap<Class<out Task>, Bag>, bag: Bag):MutableList<Lock> {
-
-        val inTask = bag.inTask
+        bag.await()
+        showLog("${bag.task} start running, and await cost time is ${System.currentTimeMillis() - startTime}")
+        bag.doTask()
+        showLog("${bag.task} end running, and start release countDown")
         val outTask = bag.outTask
-        showLog("===>>>lockTask, bag: ${bag.task}, threadName: ${Thread.currentThread().name}")
-        showLog("===>>>lockTask, bag: ${bag.task}, inTask: $inTask")
-        showLog("===>>>lockTask, bag: ${bag.task}, outTask: $outTask")
-
-        val lockList= mutableListOf<Lock>()
-
-        if (!inTask.isNullOrEmpty()) {
-            inTask.forEach {
-                val targetBag = map[it]
-                targetBag?.apply {
-                    showLog("===>>>lockTask, bag: ${bag.task}, targetBag: $targetBag")
-                    lockList.add(targetBag.lock())
-                }
+        if (!outTask.isNullOrEmpty()) {
+            outTask.forEach {
+                val outBag = map[it]
+                outBag?.countDown()
             }
         }
-
-        if (!outTask.isNullOrEmpty()) {
-            showLog("===>>>lockTask, bag: ${bag.task}, lock self: $bag")
-            lockList.add(bag.lock())
-        }
-        showLog("===>>>lockTask, bag: ${bag.task}, lockList: $lockList, threadName: ${Thread.currentThread().name}")
-        return lockList
+        showLog("${bag.task} end running, and cost time is ${System.currentTimeMillis() - startTime}")
     }
 
     private fun getThreadPool(): ThreadPoolExecutor {

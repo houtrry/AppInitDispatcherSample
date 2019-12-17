@@ -1,7 +1,6 @@
 package com.houtrry.appinitdispatcher
 
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.CountDownLatch
 
 /**
  * @author: houtrry
@@ -15,19 +14,20 @@ class Bag constructor(var task: Task? = null){
     var outTask:MutableList<Class<out Task>>? = null
     var inTask:List<Class<out Task>>? = null
 
-    private val lock: Lock = ReentrantLock()
+    private val countDownLatch:CountDownLatch by lazy {
+        CountDownLatch(if (inTask.isNullOrEmpty()) 0 else inTask!!.size)
+    }
 
     fun doTask() {
         task?.run()
     }
 
-    fun lock():Lock {
-        lock.lock()
-        return lock
+    fun await() {
+        countDownLatch.await()
     }
 
-    fun unlock() {
-        lock.unlock()
+    fun countDown() {
+        countDownLatch.countDown()
     }
 
     override fun toString(): String {
