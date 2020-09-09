@@ -1,5 +1,6 @@
 package com.houtrry.appinitdispatcher
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import java.util.concurrent.*
@@ -22,6 +23,7 @@ class AppInitDispatcher private constructor() {
 
     private val mainHandle: Handler by lazy { Handler(Looper.getMainLooper()) }
 
+    private lateinit var context:Context
 
     companion object {
         val INSTANCE: AppInitDispatcher by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) { AppInitDispatcher() }
@@ -34,20 +36,26 @@ class AppInitDispatcher private constructor() {
         return this
     }
 
+    fun init(context: Context) {
+        this.context = context.applicationContext
+    }
+
     fun clear(): AppInitDispatcher {
         tasks.clear()
         return this
     }
 
     fun start(): AppInitDispatcher {
+        showLog("AppInitDispatcher start")
+        val startTime = System.currentTimeMillis()
         val sortedMap = directedAcyclicGraphSort(tasks)
         val sortedList = outputSortList(sortedMap)
+        showLog("AppInitDispatcher start, directedAcyclicGraphSort and outputSortList cost time is ${System.currentTimeMillis() - startTime}")
 
         sortedList.forEach {
-            val task = it.task
-            if (task != null) {
+            it.task?.also { task ->
                 if (task.runOn() == Task.THREAD_TYPE_MAIN) {
-                    mainHandle.post{
+                    mainHandle.post {
                         doTask(sortedMap, it)
                     }
                 } else {
@@ -67,11 +75,16 @@ class AppInitDispatcher private constructor() {
         showLog("${bag.task} start running, and await cost time is ${System.currentTimeMillis() - startTime}")
         bag.doTask()
         showLog("${bag.task} end running, and start release countDown")
-        val outTask = bag.outTask
-        if (!outTask.isNullOrEmpty()) {
-            outTask.forEach {
-                val outBag = map[it]
-                outBag?.countDown()
+//        val outTask = bag.outTask
+//        if (!outTask.isNullOrEmpty()) {
+//            outTask.forEach {
+//                val outBag = map[it]
+//                outBag?.countDown()
+//            }
+//        }
+        bag.outTask?.let {
+            it.forEach {cls->
+                map[cls]?.countDown()
             }
         }
         showLog("${bag.task} end running, and cost time is ${System.currentTimeMillis() - startTime}")
